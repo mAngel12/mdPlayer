@@ -1,5 +1,11 @@
-package music.player;
+package com.dultzdev.mdplayer;
 
+
+import com.dultzdev.mdplayer.service.PlayerService;
+import com.dultzdev.mdplayer.model.Song;
+import com.dultzdev.mdplayer.service.PlaylistOpenService;
+import com.dultzdev.mdplayer.service.PlaylistSaveService;
+import com.dultzdev.mdplayer.service.PlaylistService;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,30 +20,23 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 
-public class MainWindow extends javax.swing.JFrame {
+public class PlayerUI extends javax.swing.JFrame {
 
-    /**
-     * Creates new form MainWindow
-     */
-    public MainWindow() {
+    public PlayerUI() {
         initComponents();
         setIcon();
         class RefreshGUITimer extends TimerTask {
             @Override
             public void run() {
-                if(usedPlayFunction == true)
-                {
-                    if(newListWindow.playlistFileAmount == 0)
-                    {
+                if(usedPlayFunction == true) {
+                    if(newListWindow.playlistFileAmount == 0) {
                         TitleTextField.setText("No Author - No Title");
                     }
-                    else if(player.getFileType() != "WAVE" && player.getFileType() != "AIFF" && player.getFileType() != "AU")
-                    {
-                        TitleTextField.setText(newListWindow.playlistElements[actualPlaylistIndex].getElementAuthorAndTitle());
+                    else if(player.getFileType() != "WAVE" && player.getFileType() != "AIFF" && player.getFileType() != "AU") {
+                        TitleTextField.setText(newListWindow.songs[actualPlaylistIndex].getAuthorAndTitle());
                     }
-                    else
-                    {
-                        TitleTextField.setText(newListWindow.playlistElements[actualPlaylistIndex].elementTitle);
+                    else {
+                        TitleTextField.setText(newListWindow.songs[actualPlaylistIndex].getTitle());
                     }
                     usedPlayFunction = false;
                 }
@@ -49,66 +48,64 @@ public class MainWindow extends javax.swing.JFrame {
                 if (!userUseSlider && FileSlider.getValueIsAdjusting()) {
                     timerUpdateSlider = true;
                     try {
-                        FileSlider.setValue(player.getSecPosition());  
+                        FileSlider.setValue(player.getPositionInSeconds());  
                     }
                     finally {
                         timerUpdateSlider = false;
                     }
                 }
-                if (newListWindow.doubleClickChoose)
-                {
-                    player.play(newListWindow.playlistElements[newListWindow.doubleClickChooseIndex].elementPath);
+                if (newListWindow.doubleClickChoose) {
+                    player.play(newListWindow.songs[newListWindow.doubleClickChooseIndex].getPath());
+                    player.setVolume(volume);
                     actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                     FileSlider.setValueIsAdjusting(true);
-                    FileSlider.setMaximum(player.getSecDuration());
+                    FileSlider.setMaximum(player.getDurationInSeconds());
                     newListWindow.doubleClickChoose = false;
                     usedPlayFunction = true;
                 }
-                if (player.endOfMusic)
-                {
-                    if(repeatMode)
-                    {
+                if (player.getEndOfSong()) {
+                    if(repeatMode) {
                         newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-                        player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                        player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                        player.setVolume(volume);
                         actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                         FileSlider.setValueIsAdjusting(true);
-                        FileSlider.setMaximum(player.getSecDuration());
-                        player.endOfMusic = false;
+                        FileSlider.setMaximum(player.getDurationInSeconds());
+                        player.setEndOfSong(false);
                         usedPlayFunction = true;
                     }
-                    else if(randomMode)
-                    {
+                    else if(randomMode) {
                         Random randomGenerator = new Random();
                         newListWindow.PlaylistList.setSelectedIndex(randomGenerator.nextInt(newListWindow.playlistFileAmount-1));
-                        player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                        player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                        player.setVolume(volume);
                         actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                         FileSlider.setValueIsAdjusting(true);
-                        FileSlider.setMaximum(player.getSecDuration());
-                        player.endOfMusic = false;
+                        FileSlider.setMaximum(player.getDurationInSeconds());
+                        player.setEndOfSong(false);
                         usedPlayFunction = true;
                     }
-                    else
-                    {
-                        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount)
-                        {
+                    else {
+                        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount) {
                             actualPlaylistIndex = actualPlaylistIndex+1;
                             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-                            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                            player.setVolume(volume);
                             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                             FileSlider.setValueIsAdjusting(true);
-                            FileSlider.setMaximum(player.getSecDuration());
-                            player.endOfMusic = false;
+                            FileSlider.setMaximum(player.getDurationInSeconds());
+                            player.setEndOfSong(false);
                             usedPlayFunction = true;
                         }
-                        else
-                        { 
+                        else { 
                             actualPlaylistIndex = 0;
                             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-                            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                            player.setVolume(volume);
                             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                             FileSlider.setValueIsAdjusting(true);
-                            FileSlider.setMaximum(player.getSecDuration());
-                            player.endOfMusic = false;
+                            FileSlider.setMaximum(player.getDurationInSeconds());
+                            player.setEndOfSong(false);
                             usedPlayFunction = true;
                         }
                     }
@@ -120,21 +117,18 @@ public class MainWindow extends javax.swing.JFrame {
         RefreshTimer.schedule(RefreshTimerTask, 0, 250);
    
     }
-    int VolumeMemory = 100;
+    int volumeMemoryForMute = 100;
+    float volume = (float) 0.5;
     int actualPlaylistIndex;
     boolean userUseSlider = false;
     boolean timerUpdateSlider = true;
     boolean repeatMode = false;
     boolean randomMode = false;
     boolean usedPlayFunction = false;
-    AudioPlugin player = new AudioPlugin();
-    public ListWindow newListWindow = new ListWindow(this);
+    PlayerService player = new PlayerService();
+    public ListUI newListWindow = new ListUI(this);
     
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -277,7 +271,7 @@ public class MainWindow extends javax.swing.JFrame {
         TimeTextField.setEditable(false);
         TimeTextField.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         TimeTextField.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        TimeTextField.setText(Integer.toString(player.getSecPosition()));
+        TimeTextField.setText(Integer.toString(player.getPositionInSeconds()));
         TimeTextField.setFocusTraversalPolicyProvider(true);
 
         TitleTextField.setEditable(false);
@@ -543,44 +537,40 @@ public class MainWindow extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
     
     private void RepeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RepeatCheckBoxActionPerformed
-        if(RepeatCheckBox.isSelected())
-        {
+        if(RepeatCheckBox.isSelected()) {
             repeatMode = true;
             randomMode = false;
             RepeatCheckBox.setSelected(true);
             RandomCheckBox.setSelected(false);
             RandomCheckBoxMenuItem.setSelected(false);
         }
-        else if(!RepeatCheckBox.isSelected())
-        {
+        else if(!RepeatCheckBox.isSelected()) {
             repeatMode = false;
             RepeatCheckBoxMenuItem.setSelected(false);
         }
     }//GEN-LAST:event_RepeatCheckBoxActionPerformed
 
     private void MuteCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MuteCheckBoxActionPerformed
-        if(MuteCheckBox.isSelected())
-        {
-            VolumeMemory = VolumeSlider.getValue();
+        if(MuteCheckBox.isSelected()) {
+            volumeMemoryForMute = VolumeSlider.getValue();
             VolumeSlider.setValue(0);
             MuteCheckBoxMenuItem.setSelected(true);
         }
-        else if(!MuteCheckBox.isSelected())
-        {
-            VolumeSlider.setValue(VolumeMemory);
+        else if(!MuteCheckBox.isSelected()) {
+            VolumeSlider.setValue(volumeMemoryForMute);
             MuteCheckBoxMenuItem.setSelected(false);
         }
     }//GEN-LAST:event_MuteCheckBoxActionPerformed
 
     private void BackButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BackButtonActionPerformed
-        if(actualPlaylistIndex > 0)
-        {
+        if(actualPlaylistIndex > 0) {
             actualPlaylistIndex = actualPlaylistIndex-1;
             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
     }//GEN-LAST:event_BackButtonActionPerformed
@@ -590,14 +580,14 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_PauseButtonActionPerformed
 
     private void NextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NextButtonActionPerformed
-        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount)
-        {
+        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount) {
             actualPlaylistIndex = actualPlaylistIndex+1;
             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
     }//GEN-LAST:event_NextButtonActionPerformed
@@ -612,27 +602,25 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_PlayListButtonActionPerformed
 
     private void PlayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PlayButtonActionPerformed
-        if(newListWindow.PlaylistList.getSelectedIndex() >= 0)
-        {
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+        if(newListWindow.PlaylistList.getSelectedIndex() >= 0) {
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
-        else
-        {   
-            if(newListWindow.playlistFileAmount == 0)
-            { 
+        else {   
+            if(newListWindow.playlistFileAmount == 0) { 
                 usedPlayFunction = true;
             }
-            else
-            {
+            else {
                 newListWindow.PlaylistList.setSelectedIndex(0);
-                player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                player.setVolume(volume);
                 actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                 FileSlider.setValueIsAdjusting(true);
-                FileSlider.setMaximum(player.getSecDuration());
+                FileSlider.setMaximum(player.getDurationInSeconds());
                 usedPlayFunction = true;
             }
         }  
@@ -644,35 +632,31 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void FileSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_FileSliderStateChanged
         
-        if(player.getFileType() == "MP3" || player.getFileType() == "WAVE")
-        {
+        if(player.getFileType() == "MP3" || player.getFileType() == "WAVE") {
             long filePositionBytes = 0;
-            if(!userUseSlider && !FileSlider.getValueIsAdjusting())
-            {
+            if(!userUseSlider && !FileSlider.getValueIsAdjusting()) {
                 userUseSlider = true;
                 try {
-                    if(player.getFileType() == "MP3")
-                    {
+                    player.pause();
+                    if(player.getFileType() == "MP3") {
                         filePositionBytes = (FileSlider.getValue()*player.getBitrate())/8+player.getFilePlayFirstBytes();
                     }
-                    else if(player.getFileType() == "WAVE")
-                    {
+                    else if(player.getFileType() == "WAVE") {
                         filePositionBytes = (long) (FileSlider.getValue()*player.getFileFrameSizeBytes()*player.getFileFrameRatePerSec());
                     }
-                    else
-                    {
+                    else {
                         filePositionBytes = 0;
                     }
                 }
                 finally {
                     player.seek(filePositionBytes);
+                    player.setVolume(volume);
                     userUseSlider = false;
                     FileSlider.setValueIsAdjusting(true);
                 }
             }
         }
-        else
-        {
+        else {
             userUseSlider = false;
             FileSlider.setValueIsAdjusting(true);
         }
@@ -680,19 +664,18 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void VolumeSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_VolumeSliderStateChanged
         player.setVolume((float) VolumeSlider.getValue()/200);
+        volume = (float) VolumeSlider.getValue()/200;
     }//GEN-LAST:event_VolumeSliderStateChanged
 
     private void RandomCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RandomCheckBoxActionPerformed
-        if(RandomCheckBox.isSelected())
-        {
+        if(RandomCheckBox.isSelected()) {
             randomMode = true;
             repeatMode = false;
             RandomCheckBoxMenuItem.setSelected(true);
             RepeatCheckBox.setSelected(false);
             RepeatCheckBoxMenuItem.setSelected(false);
         }
-        else if(!RandomCheckBox.isSelected())
-        {
+        else if(!RandomCheckBox.isSelected()) {
             randomMode = false;
             RandomCheckBoxMenuItem.setSelected(false);
         }
@@ -701,7 +684,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void AboutMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AboutMenuItemActionPerformed
         JOptionPane.showMessageDialog(null, "mdPlayer is a simple music player written in Java using BasicPlayer API.\n"
             + "Copyright © 2017 DultzDev.\n"
-            + "mdPlayer v0.1\n"
+            + "mdPlayer v0.1.1\n"
             + "Visit www.dultzdev.com for updates and more informations.\n", "About mdPlayer",
             JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_AboutMenuItemActionPerformed
@@ -724,35 +707,33 @@ public class MainWindow extends javax.swing.JFrame {
         addFileChooser.addChoosableFileFilter(filterAU);
  
         int fileResult = addFileChooser.showOpenDialog(this);
-        if (fileResult == JFileChooser.APPROVE_OPTION)
-        {
+        if (fileResult == JFileChooser.APPROVE_OPTION) {
             File selectedFile = addFileChooser.getSelectedFile();
             String selectedFilePath = selectedFile.getPath();
             newListWindow.lastParentPath = selectedFile.getParent();
-            PlaylistPlugin playlistPlugin = new PlaylistPlugin(selectedFilePath);
-            if(playlistPlugin.getFileType() != "WAVE" && playlistPlugin.getFileType() != "AIFF" && playlistPlugin.getFileType() != "AU")
-            {
-                String elementTitle = playlistPlugin.getTitle();
-                String elementAuthor = playlistPlugin.getAuthor();
-                String elementAuthorAndTitle = playlistPlugin.getAuthorAndTitle();
-                String elementType = playlistPlugin.getFileType();
+            PlaylistService playlistService = new PlaylistService(selectedFilePath);
+            if(playlistService.getFileType() != "WAVE" && playlistService.getFileType() != "AIFF" && playlistService.getFileType() != "AU") {
+                String elementTitle = playlistService.getTitle();
+                String elementAuthor = playlistService.getAuthor();
+                String elementAuthorAndTitle = playlistService.getAuthorAndTitle();
+                String elementType = playlistService.getFileType();
                 newListWindow.playlistFileAmount = newListWindow.playlistFileAmount + 1;
-                newListWindow.playlistElements[newListWindow.playlistFileAmount-1] = new PlaylistElement(elementTitle, elementAuthor, selectedFilePath, elementType);
+                newListWindow.songs[newListWindow.playlistFileAmount-1] = new Song(elementTitle, elementAuthor, selectedFilePath, elementType);
                 newListWindow.listModel.addElement(newListWindow.playlistFileAmount + ". " + elementAuthorAndTitle);
             }
-            else
-            {
+            else {
                 newListWindow.selectedFileName = selectedFile.getName();
-                String elementType = playlistPlugin.getFileType();
+                String elementType = playlistService.getFileType();
                 newListWindow.playlistFileAmount = newListWindow.playlistFileAmount + 1;
-                newListWindow.playlistElements[newListWindow.playlistFileAmount-1] = new PlaylistElement(newListWindow.selectedFileName, "", selectedFilePath, elementType);
+                newListWindow.songs[newListWindow.playlistFileAmount-1] = new Song(newListWindow.selectedFileName, "", selectedFilePath, elementType);
                 newListWindow.listModel.addElement(newListWindow.playlistFileAmount + ". " + newListWindow.selectedFileName);
             }         
         newListWindow.PlaylistList.setSelectedIndex(newListWindow.playlistFileAmount-1);
-        player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+        player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+        player.setVolume(volume);
         actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
         FileSlider.setValueIsAdjusting(true);
-        FileSlider.setMaximum(player.getSecDuration());
+        FileSlider.setMaximum(player.getDurationInSeconds());
         usedPlayFunction = true;
         }
         
@@ -767,24 +748,21 @@ public class MainWindow extends javax.swing.JFrame {
         addFileChooser.addChoosableFileFilter(filterPlaylist);
  
         int fileResult = addFileChooser.showOpenDialog(this);
-        if (fileResult == JFileChooser.APPROVE_OPTION)
-        {
+        if (fileResult == JFileChooser.APPROVE_OPTION) {
             File selectedFile = addFileChooser.getSelectedFile();
             newListWindow.lastParentPath = selectedFile.getParent();
-            PlsFormatPlugin openPlaylist = new PlsFormatPlugin();
+            PlaylistOpenService openPlaylist = new PlaylistOpenService();
             newListWindow.listModel.removeAllElements();
             int numberOfEntries;
             try {
                 numberOfEntries = openPlaylist.numberOfEntries(selectedFile);
-                for(int i=newListWindow.playlistFileAmount; i<numberOfEntries; i++)
-                {
-                    newListWindow.playlistElements[i] = new PlaylistElement();
+                for(int i=newListWindow.playlistFileAmount; i<numberOfEntries; i++) {
+                    newListWindow.songs[i] = new Song();
                 }
                 newListWindow.playlistFileAmount = 0;
-                for(int i=1; i<=numberOfEntries; i++)
-                {
-                   newListWindow.listModel.addElement(openPlaylist.openPlaylist_returnLM(selectedFile, i));
-                   newListWindow.playlistElements[i-1] = openPlaylist.openPlaylist_returnPE(selectedFile, i);
+                for(int i=1; i<=numberOfEntries; i++) {
+                   newListWindow.listModel.addElement(openPlaylist.openPlaylistAndReturnOneElementToString(selectedFile, i));
+                   newListWindow.songs[i-1] = openPlaylist.openPlaylistAndReturnOneElementToSong(selectedFile, i);
                    newListWindow.playlistFileAmount = newListWindow.playlistFileAmount + 1;
                 }
             } catch (IOException ex) {
@@ -794,25 +772,22 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void SavePlaylistMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SavePlaylistMenuItemActionPerformed
         List<String> pathList = new ArrayList<String>();
-        for(int i=0; i<newListWindow.playlistFileAmount; i++)
-        {
-            pathList.add(newListWindow.playlistElements[i].elementPath);
+        for(int i=0; i<newListWindow.playlistFileAmount; i++) {
+            pathList.add(newListWindow.songs[i].getPath());
         }
         JFileChooser saveFileChooser = new JFileChooser(newListWindow.lastParentPath);
         saveFileChooser.setAcceptAllFileFilterUsed(false);
         FileNameExtensionFilter filterPLS = new FileNameExtensionFilter("Playlist File Format (.pls)", "pls");
         saveFileChooser.addChoosableFileFilter(filterPLS);
         int fileResult = saveFileChooser.showSaveDialog(this);
-        if (fileResult == JFileChooser.APPROVE_OPTION) 
-        {
+        if (fileResult == JFileChooser.APPROVE_OPTION) {
             String filename = saveFileChooser.getSelectedFile().toString();
-            if (!filename .endsWith(".pls"))
-            {
+            if (!filename .endsWith(".pls")) {
                 filename += ".pls";
             }
             File file = new File(filename);
             newListWindow.lastParentPath = file.getParent();
-            PlsFormatPlugin savePlaylist = new PlsFormatPlugin();
+            PlaylistSaveService savePlaylist = new PlaylistSaveService();
             try {
                 savePlaylist.savePlaylist(file, pathList, newListWindow.playlistFileAmount);
             } catch (FileNotFoundException ex) {
@@ -825,40 +800,39 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_ExitMenuItemActionPerformed
 
     private void PreviousMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PreviousMenuItemActionPerformed
-        if(actualPlaylistIndex > 0)
-        {
+        if(actualPlaylistIndex > 0) {
             actualPlaylistIndex = actualPlaylistIndex-1;
             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
     }//GEN-LAST:event_PreviousMenuItemActionPerformed
 
     private void PlayMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PlayMenuItemActionPerformed
-        if(newListWindow.PlaylistList.getSelectedIndex() >= 0)
-        {
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+        if(newListWindow.PlaylistList.getSelectedIndex() >= 0) {
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
         else
         {   
-            if(newListWindow.playlistFileAmount == 0)
-            { 
+            if(newListWindow.playlistFileAmount == 0) { 
                 usedPlayFunction = true;
             }
-            else
-            {
+            else {
                 newListWindow.PlaylistList.setSelectedIndex(0);
-                player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+                player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+                player.setVolume(volume);
                 actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
                 FileSlider.setValueIsAdjusting(true);
-                FileSlider.setMaximum(player.getSecDuration());
+                FileSlider.setMaximum(player.getDurationInSeconds());
                 usedPlayFunction = true;
             }
         }
@@ -867,12 +841,11 @@ public class MainWindow extends javax.swing.JFrame {
     private void PauseMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PauseMenuItemActionPerformed
         player.pause();
         
-        for(int i=0; i<newListWindow.playlistFileAmount; i++)
-        {
-            System.out.println(newListWindow.playlistElements[i].elementAuthor);
-            System.out.println(newListWindow.playlistElements[i].elementPath);
-            System.out.println(newListWindow.playlistElements[i].elementTitle);
-            System.out.println(newListWindow.playlistElements[i].elementType);
+        for(int i=0; i<newListWindow.playlistFileAmount; i++) {
+            System.out.println(newListWindow.songs[i].getAuthor());
+            System.out.println(newListWindow.songs[i].getPath());
+            System.out.println(newListWindow.songs[i].getTitle());
+            System.out.println(newListWindow.songs[i].getType());
             
         }
         
@@ -883,40 +856,40 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_StopMenuItemActionPerformed
 
     private void NextMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NextMenuItemActionPerformed
-        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount)
-        {
+        if(actualPlaylistIndex+1 < newListWindow.playlistFileAmount) {
             actualPlaylistIndex = actualPlaylistIndex+1;
             newListWindow.PlaylistList.setSelectedIndex(actualPlaylistIndex);
-            player.play(newListWindow.playlistElements[newListWindow.PlaylistList.getSelectedIndex()].elementPath);
+            player.play(newListWindow.songs[newListWindow.PlaylistList.getSelectedIndex()].getPath());
+            player.setVolume(volume);
             actualPlaylistIndex = newListWindow.PlaylistList.getSelectedIndex();
             FileSlider.setValueIsAdjusting(true);
-            FileSlider.setMaximum(player.getSecDuration());
+            FileSlider.setMaximum(player.getDurationInSeconds());
             usedPlayFunction = true;
         }
     }//GEN-LAST:event_NextMenuItemActionPerformed
 
     private void VolumeUpMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VolumeUpMenuItemActionPerformed
-        if((float) VolumeSlider.getValue()/200 <= 0.45)
-        {
+        if((float) VolumeSlider.getValue()/200 <= 0.45) {
             player.setVolume((float) ((float) VolumeSlider.getValue()/200 + 0.05));
+            volume += 0.05;
             VolumeSlider.setValue(VolumeSlider.getValue()+10);
         }
-        else
-        {
+        else {
             player.setVolume((float) 0.5);
+            volume = (float) 0.5;
             VolumeSlider.setValue(100);
         }
     }//GEN-LAST:event_VolumeUpMenuItemActionPerformed
 
     private void VolumeDownMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_VolumeDownMenuItemActionPerformed
-        if((float) VolumeSlider.getValue()/200 >= 0.05)
-        {
+        if((float) VolumeSlider.getValue()/200 >= 0.05) {
             player.setVolume((float) ((float) VolumeSlider.getValue()/200 - 0.05));
+            volume -= 0.05;
             VolumeSlider.setValue(VolumeSlider.getValue()-10);
         }
-        else
-        {
+        else {
             player.setVolume((float) 0.0);
+            volume = 0;
             VolumeSlider.setValue(0);
         }
     }//GEN-LAST:event_VolumeDownMenuItemActionPerformed
@@ -931,58 +904,49 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_PlaylistPanelMenuItemActionPerformed
 
     private void RepeatCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RepeatCheckBoxMenuItemActionPerformed
-        if(RepeatCheckBoxMenuItem.isSelected())
-        {
+        if(RepeatCheckBoxMenuItem.isSelected()) {
             repeatMode = true;
             randomMode = false;
             RepeatCheckBox.setSelected(true);
             RandomCheckBox.setSelected(false);
             RandomCheckBoxMenuItem.setSelected(false);
         }
-        else if(!RepeatCheckBoxMenuItem.isSelected())
-        {
+        else if(!RepeatCheckBoxMenuItem.isSelected()) {
             repeatMode = false;
             RepeatCheckBox.setSelected(false);
         }
     }//GEN-LAST:event_RepeatCheckBoxMenuItemActionPerformed
 
     private void RandomCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_RandomCheckBoxMenuItemActionPerformed
-        if(RandomCheckBoxMenuItem.isSelected())
-        {
+        if(RandomCheckBoxMenuItem.isSelected()) {
             randomMode = true;
             repeatMode = false;
             RandomCheckBox.setSelected(true);
             RepeatCheckBox.setSelected(false);
             RepeatCheckBoxMenuItem.setSelected(false);
         }
-        else if(!RandomCheckBoxMenuItem.isSelected())
-        {
+        else if(!RandomCheckBoxMenuItem.isSelected()) {
             randomMode = false;
             RandomCheckBox.setSelected(false);
         }
     }//GEN-LAST:event_RandomCheckBoxMenuItemActionPerformed
 
     private void MuteCheckBoxMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MuteCheckBoxMenuItemActionPerformed
-         if(MuteCheckBoxMenuItem.isSelected())
-        {
-            VolumeMemory = VolumeSlider.getValue();
+        if(MuteCheckBoxMenuItem.isSelected()) {
+            volumeMemoryForMute = VolumeSlider.getValue();
             VolumeSlider.setValue(0);
             MuteCheckBox.setSelected(true);
         }
-        else if(!MuteCheckBoxMenuItem.isSelected())
-        {
-            VolumeSlider.setValue(VolumeMemory);
+        else if(!MuteCheckBoxMenuItem.isSelected()) {
+            VolumeSlider.setValue(volumeMemoryForMute);
             MuteCheckBox.setSelected(false);
         }
     }//GEN-LAST:event_MuteCheckBoxMenuItemActionPerformed
-    
-    private void setIcon()
-    {
-        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("icon_mdplayer.png")));
+
+    private void setIcon() {
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("resources/icon.png")));
     }
-    /**
-     * @param args the command line arguments
-     */
+
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -997,19 +961,19 @@ public class MainWindow extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PlayerUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PlayerUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PlayerUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(PlayerUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-            MainWindow mainWindow = new MainWindow();
+            PlayerUI mainWindow = new PlayerUI();
             mainWindow.setVisible(true);
             }
         }); 

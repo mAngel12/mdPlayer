@@ -1,36 +1,26 @@
-package music.player;
+package com.dultzdev.mdplayer.service;
 
+import com.dultzdev.mdplayer.model.Song;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
 
 
-public class PlsFormatPlugin {
+public class PlaylistOpenService {
     
-    public PlsFormatPlugin()
-    {
+    public int numberOfEntries(File file) throws IOException {
         
-    }
-    
-    public int numberOfEntries(File file) throws IOException
-    {
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         String textLine = bufferedReader.readLine();
         String numberString = null;
         int number = 0;
         do {
-            if(textLine.contains("NumberOfEntries="))
-            {
-                for(int i = 0; i<textLine.length(); i++)
-                {
+            if(textLine.contains("NumberOfEntries=")) {
+                for(int i = 0; i<textLine.length(); i++) {
                     char c = textLine.charAt(i);
-                    if (c == '=')
-                    {
+                    if (c == '=') {
                         numberString = textLine.substring( i+1, textLine.length() );
                         i = textLine.length();
                     }
@@ -43,8 +33,8 @@ public class PlsFormatPlugin {
         number = Integer.parseInt(numberString);
         return number;
     }
-    public String openPlaylist_returnLM(File file, int index) throws IOException
-    {
+    public String openPlaylistAndReturnOneElementToString(File file, int index) throws IOException {
+        
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         String textLine = bufferedReader.readLine();
@@ -65,7 +55,7 @@ public class PlsFormatPlugin {
                         
                 }
                 File mfile = new File(filePath);
-                PlaylistPlugin playlist = new PlaylistPlugin(filePath); 
+                PlaylistService playlist = new PlaylistService(filePath); 
                 if(playlist.getFileType() != "WAVE" && playlist.getFileType() != "AIFF" && playlist.getFileType() != "AU")
                 {
                     finalTitle = index + ". " + playlist.getAuthorAndTitle(); 
@@ -83,11 +73,11 @@ public class PlsFormatPlugin {
         return finalTitle;
     }
     
-    public PlaylistElement openPlaylist_returnPE(File file, int index) throws IOException
-    {
+    public Song openPlaylistAndReturnOneElementToSong(File file, int index) throws IOException {
+        
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
-        PlaylistElement playlistElement = new PlaylistElement();
+        Song song = new Song();
         String textLine = bufferedReader.readLine();
         String filePath = null;
         do {
@@ -103,19 +93,19 @@ public class PlsFormatPlugin {
                         
                 }
                 File mfile = new File(filePath);
-                PlaylistPlugin playlist = new PlaylistPlugin(filePath); 
+                PlaylistService playlist = new PlaylistService(filePath); 
                 if(playlist.getFileType() != "WAVE" && playlist.getFileType() != "AIFF" && playlist.getFileType() != "AU")
                 {
-                    playlistElement.elementTitle = playlist.getTitle();
-                    playlistElement.elementAuthor = playlist.getAuthor();
-                    playlistElement.elementType = playlist.getFileType();
-                    playlistElement.elementPath = filePath.toString();
+                    song.setTitle(playlist.getTitle());
+                    song.setAuthor(playlist.getAuthor());
+                    song.setType(playlist.getFileType());
+                    song.setPath(filePath.toString());
                 }
                 else
                 {
-                    playlistElement.elementTitle = mfile.getName();
-                    playlistElement.elementType = playlist.getFileType();
-                    playlistElement.elementPath = filePath.toString();
+                    song.setTitle(mfile.getName());
+                    song.setType(playlist.getFileType());
+                    song.setPath(filePath.toString());
                 }
             }
             textLine = bufferedReader.readLine();
@@ -123,25 +113,6 @@ public class PlsFormatPlugin {
         
         bufferedReader.close();
 
-        return playlistElement;
+        return song;
     }      
-    public void savePlaylist(File file, List pathList, int amount) throws FileNotFoundException
-    {
-        PrintWriter cleaner = new PrintWriter(file);
-        cleaner.print("");
-        cleaner.close();
-        PrintWriter saver = new PrintWriter(file);
-        saver.println("[playlist]");
-        for(int i = 1; i <= amount; i++)
-        {
-            String fileN = "File" + i + "=" + pathList.get(i-1).toString();
-            saver.println(fileN);
-        }
-        saver.println("NumberOfEntries=" + amount);
-        saver.println("Version=2");
-        saver.close();
-
-    }
 }
-    
-

@@ -1,10 +1,9 @@
-package music.player;
-
+package com.dultzdev.mdplayer.plugin;
 
 import javazoom.jlgui.basicplayer.BasicPlayer;
 
 
-public class myBasicPlayer extends BasicPlayer {
+public class EditedBasicPlayer extends BasicPlayer {
     
     public int getStreamPosition()
     {
